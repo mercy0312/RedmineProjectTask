@@ -1,0 +1,104 @@
+<% form_tag(:action => "update", :project_id => @project) do -%>	
+<%= hidden_field_tag 'back_url', url_for(params) %>
+<div class="autoscroll">
+<table class="list issues">
+    <thead><tr>
+        <th><%= link_to image_tag('toggle_check.png'), {}, :onclick => 'toggleIssuesSelection(Element.up(this, "form")); return false;',
+                                                           :title => "#{l(:button_check_all)}/#{l(:button_uncheck_all)}" %>
+        </th>
+		<%= sort_header_tag('id', :caption => '#', :default_order => 'desc') %>
+        <% query.columns.each do |column| %>
+          <%= column_header(column) %>
+        <% end %>
+	</tr></thead>
+	<% previous_group = false %>
+	<tbody>
+		
+	<% issues.each do |issue| -%>
+	<% fields_for issue, :index => issue.id do |field| %>
+
+	
+  <% if @query.grouped? && (group = @query.group_by_column.value(issue)) != previous_group %>
+    <% reset_cycle %>
+    <tr class="group open">
+    	<td colspan="<%= query.columns.size + 2 %>">
+    		<span class="expander" onclick="toggleRowGroup(this); return false;">&nbsp;</span>
+      	<%= group.blank? ? 'None' : column_content(@query.group_by_column, issue) %> <span class="count">(<%= @issue_count_by_group[group] %>)</span>
+    	</td>
+		</tr>
+		<% previous_group = group %>
+  <% end %>
+	<tr id="issue-<%= issue.id %>" class="hascontextmenu <%= cycle('odd', 'even') %> <%= issue.css_classes %>">
+	    <td class="checkbox"><%= check_box_tag("ids[]", issue.id, false, :id => nil) %></td>
+		<td><%= link_to issue.id, :controller => 'issues', :action => 'show', :id => issue %></td>
+        <% query.columns.each do |column| %>
+			<%= content_tag "td", column_content_form(field, column, issue), :class => column.name %>
+		<% end %>
+	</tr>
+	
+	<% end %>
+	<% end -%>
+	
+	</tbody>
+</table>
+</div>
+
+<!--*************[[new]] ************** -->
+
+<div class="autoscroll">
+<table class="list issues">
+    <thead><tr>
+
+        <% query.columns.each do |column| %>
+          <%= column_new_header(column) %>
+        <% end %>
+	</tr></thead>
+	<% previous_group = false %>
+	<tbody>
+
+	<% issue = Issue.new %>
+	<% fields_for "new", issue do |field| %>
+	
+	  <% if @query.grouped? && (group = @query.group_by_column.value(issue)) != previous_group %>
+	    <% reset_cycle %>
+	    <tr class="group open">
+	    	<td colspan="<%= query.columns.size + 2 %>">
+	    		<span class="expander" onclick="toggleRowGroup(this); return false;">&nbsp;</span>
+	      	<%= group.blank? ? 'None' : column_content(@query.group_by_column, issue) %> <span class="count">(<%= @issue_count_by_group[group] %>)</span>
+	    	</td>
+			</tr>
+			<% previous_group = group %>
+	  <% end %>
+		<tr id="issue-<%= issue.id %>" class="hascontextmenu <%= cycle('odd', 'even') %> <%= issue.css_classes %>">
+	        <% query.columns.each do |column| %>
+				<%= content_tag "td", column_content_form(field, column, issue), :class => column.name %>
+			<% end %>
+		</tr>
+	
+	<% end %>
+	</tbody>
+</table>
+</div>
+	
+	<%= submit_tag "一括変更" %>
+<% end -%>
+
+<script>
+function addFileField() {
+if (fileFieldCount >= 10) return false
+fileFieldCount++;
+var f = document.createElement("input");
+f.type = "file";
+f.name = "attachments[" + fileFieldCount + "][file]";
+f.size = 30;
+var d = document.createElement("input");
+d.type = "text";
+d.name = "attachments[" + fileFieldCount + "][description]";
+d.size = 60;
+p = document.getElementById("attachments_fields");
+p.appendChild(document.createElement("br"));
+p.appendChild(f);
+p.appendChild(d);
+}
+
+</script>
